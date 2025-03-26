@@ -853,10 +853,11 @@ class RayPPOTrainer(object):
                     # compute global_valid tokens
                     batch.meta_info['global_token_num'] = torch.sum(batch.batch['attention_mask'], dim=-1).tolist()
 
+                    batch.meta_info['temperature'] = self.config.actor_rollout_ref.rollout.temperature
                     # recompute old_log_probs
-                    with _timer('old_log_prob', timing_raw):
-                        old_log_prob = self.actor_rollout_wg.compute_log_prob(batch)
-                        batch = batch.union(old_log_prob)
+                    # with _timer('old_log_prob', timing_raw):
+                    #     old_log_prob = self.actor_rollout_wg.compute_log_prob(batch)
+                    #     batch = batch.union(old_log_prob)
 
                     if self.use_reference_policy:
                         # compute reference log_prob
