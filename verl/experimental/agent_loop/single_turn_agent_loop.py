@@ -42,6 +42,7 @@ class SingleTurnAgentLoop(AgentLoopBase):
         request_id = uuid4().hex
 
         # Use processor if available for multimodal support
+        # TODO(sgm): check whether it can be parallelized
         if self.processor is not None:
             raw_prompt = await self.loop.run_in_executor(
                 None,

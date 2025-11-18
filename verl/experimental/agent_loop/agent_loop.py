@@ -73,7 +73,7 @@ class AsyncLLMServerManager:
         heapq.heapify(self.weighted_serveres)
 
         # LRU cache to map request_id to server
-        self.request_id_to_server = LRUCache(maxsize=max_cache_size)
+        self.request_id_to_server = LRUCache[Any, Any](maxsize=max_cache_size)
 
     def _choose_server(self, request_id: str) -> ray.actor.ActorHandle:
         # TODO: implement server pressure awareness load balancing
@@ -180,6 +180,7 @@ class AgentLoopBase(ABC):
     """An agent loop takes a input message, chat with OpenAI compatible LLM server and interact with various
     environments."""
 
+    # TODO(sgm): do not use class methods. Because it prevent us to support prompt-level agent loop
     _class_initialized = False
 
     def __init__(
@@ -358,6 +359,8 @@ class AgentLoopWorkerBase:
 
         tasks = []
         for i in range(len(batch)):
+            # TODO: all the information are stored in the non_tensor_batch
+            # 我们是否需要online地处理这些non_tensor_batch，然后是写在data preprocess里还是写在agent loop里
             kwargs = {k: v[i] for k, v in batch.non_tensor_batch.items()}
             tasks.append(asyncio.create_task(self._run_agent_loop(sampling_params, trajectory_info[i], **kwargs)))
         outputs = await asyncio.gather(*tasks)
@@ -696,10 +699,11 @@ class AgentLoopManager:
             * self.config.actor_rollout_ref.rollout.data_parallel_size
             * self.config.actor_rollout_ref.rollout.pipeline_model_parallel_size
         )
+        # TODO(sgm): when the worker group is None (not standalone mode), whether the computation world_size is correct?
         world_size = (
             self.worker_group.world_size
             if self.worker_group
-            else self.config.trainer.n_gpus_per_node * self.config.trainer.nnodes
+            else self.config.trainer.n_gpus_per_node * self.config.trainer.nnodes  # TODO: only for CI testing
         )
         num_replicas = world_size // rollout_world_size
 

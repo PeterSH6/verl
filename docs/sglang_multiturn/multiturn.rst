@@ -38,7 +38,7 @@ Finally, set the ``tools_config_file`` in your rollout config:
 
     actor_rollout_ref:
         rollout:
-            tool_kwargs:
+            tools_kwargs:
                 tools_config_file: <path_to_tool_yaml_file>
 
 This allows integration of customized tool behaviors during actor rollout steps.

@@ -42,6 +42,13 @@ class AgentState(Enum):
     INTERACTING = "interacting"
 
 
+# TODO(sgm): 可以把前面的num_turns丢到这个AgentData里
+# 这个是实例化的对象，可以存储一些实例化的信息
+# 比如num_turns，tool_calls，response_ids，response_mask，response_logprobs，turn_scores，tool_rewards
+# 这些信息可以在线地处理，然后是写在data preprocess里还是写在agent loop里
+# 如果写在data preprocess里，那么需要在线地处理这些信息
+# 如果写在agent loop里，那么需要在线地处理这些信息
+# 如果写在data preprocess里，那么需要在线地处理这些信息
 class AgentData:
     """Encapsulates all state variables for the agent loop."""
 
@@ -89,6 +96,8 @@ class ToolAgentLoop(AgentLoopBase):
         # Initialize tools from config file
         cls.tokenizer = tokenizer
         cls.processor = processor
+        # **********************************************
+        # TODO(sgm): should be data (prompt) attributes
         cls.max_user_turns = config.actor_rollout_ref.rollout.multi_turn.max_user_turns
         cls.max_assistant_turns = config.actor_rollout_ref.rollout.multi_turn.max_assistant_turns
         cls.max_parallel_calls = config.actor_rollout_ref.rollout.multi_turn.max_parallel_calls
@@ -101,6 +110,7 @@ class ToolAgentLoop(AgentLoopBase):
         cls.tool_parser = ToolParser.get_tool_parser(config.actor_rollout_ref.rollout.multi_turn.format, cls.tokenizer)
         cls.tool_parser_name = config.actor_rollout_ref.rollout.multi_turn.format
         print(f"Initialized tools: {cls.tools}")
+        # **********************************************
 
         cls.apply_chat_template_kwargs = config.data.get("apply_chat_template_kwargs", {})
         cls.prompt_length = config.actor_rollout_ref.rollout.prompt_length
@@ -108,6 +118,7 @@ class ToolAgentLoop(AgentLoopBase):
         cls.system_prompt = tokenizer.apply_chat_template(
             [{}], add_generation_prompt=False, tokenize=True, **cls.apply_chat_template_kwargs
         )
+        # TODO(sgm): what's interactions???
         # Initialize interactions from config file
         cls.interaction_config_file = config.actor_rollout_ref.rollout.multi_turn.interaction_config_path
         if cls.interaction_config_file:
@@ -121,6 +132,7 @@ class ToolAgentLoop(AgentLoopBase):
         request_id = uuid4().hex
         tools_kwargs = kwargs.get("tools_kwargs", {})
 
+        # TODO(sgm): can we delete it???
         # Initialize interaction if needed
         interaction = None
         interaction_kwargs = {}
@@ -136,6 +148,7 @@ class ToolAgentLoop(AgentLoopBase):
                 )
             interaction = self.interaction_map[interaction_name]
             await interaction.start_interaction(request_id, **interaction_kwargs)
+
         # Create AgentData instance to encapsulate all state
         agent_data = AgentData(
             messages=messages,
@@ -321,6 +334,7 @@ class ToolAgentLoop(AgentLoopBase):
             if tool_reward is not None:
                 agent_data.tool_rewards.append(tool_reward)
 
+        # TODO(sgm): 可以直接extend吗？？？
         agent_data.messages.extend(add_messages)
         # Update prompt with tool responses
         if self.processor is not None:
